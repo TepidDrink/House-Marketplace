@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
-import { ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify"
 import NavBar from "./components/NavBar"
-import PrivateRoute from "./components/PrivateRoute";
-import Category from "./pages/Category";
+import PrivateRoute from "./components/PrivateRoute"
+import Category from "./pages/Category"
+import CreateListing from "./pages/CreateListing";
 import Explore from "./pages/Explore"
 import ForgotPassword from "./pages/ForgotPassword"
 import Offers from "./pages/Offers"
@@ -24,6 +25,7 @@ function App() {
           <Route path='/sign-in' element={ <SignIn/> }/>
           <Route path='/sign-up' element={ <SignUp/> }/>
           <Route path='/forgot-password' element={ <ForgotPassword/> }/>
+          <Route path='/create-listing' element={ <CreateListing/> }/>
         </Routes>
         <NavBar/>
       </Router>

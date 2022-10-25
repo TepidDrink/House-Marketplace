@@ -2,11 +2,11 @@ import { createUserWithEmailAndPassword, getAuth, updateProfile } from 'firebase
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify"
+import 'react-toastify/dist/ReactToastify.css'
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg'
 import visibilityIcon from '../assets/svg/visibilityIcon.svg'
-import OAuth from "../components/OAuth";
+import OAuth from "../components/OAuth"
 import { db } from '../firebase.config'
 
 function SignUp() {

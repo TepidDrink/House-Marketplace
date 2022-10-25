@@ -1,17 +1,17 @@
 import { getAuth, updateProfile } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { db } from "../firebase.config";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
+import { db } from "../firebase.config"
 
 function Profile() {
   const auth = getAuth()
-  const [changeDetails, setChangeDetails] = useState(false);
+  const [changeDetails, setChangeDetails] = useState(false)
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
-  });
+  })
   const { name, email } = formData
 
   const navigate = useNavigate()
