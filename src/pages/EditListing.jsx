@@ -1,17 +1,23 @@
+import { useState, useEffect, useRef } from 'react'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage'
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from 'firebase/storage'
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../firebase.config'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { v4 as uuidv4 } from 'uuid'
 import Spinner from '../components/Spinner'
-import { db } from '../firebase.config'
 
-function CreateListing() {
+function EditListing() {
   // eslint-disable-next-line
   const [geolocationEnabled, setGeolocationEnabled] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [listing, setListing] = useState(false)
   const [formData, setFormData] = useState({
     type: 'rent',
     name: '',
@@ -46,8 +52,37 @@ function CreateListing() {
 
   const auth = getAuth()
   const navigate = useNavigate()
+  const params = useParams()
   const isMounted = useRef(true)
 
+  // Redirect if listing is not user's
+  useEffect(() => {
+    if (listing && listing.userRef !== auth.currentUser.uid) {
+      toast.error('You can not edit that listing')
+      navigate('/')
+    }
+  })
+
+  // Fetch listing to edit
+  useEffect(() => {
+    setLoading(true)
+    const fetchListing = async () => {
+      const docRef = doc(db, 'listings', params.listingId)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        setListing(docSnap.data())
+        setFormData({ ...docSnap.data(), address: docSnap.data().location })
+        setLoading(false)
+      } else {
+        navigate('/')
+        toast.error('Listing does not exist')
+      }
+    }
+
+    fetchListing()
+  }, [params.listingId, navigate])
+
+  // Sets userRef to logged in user
   useEffect(() => {
     if (isMounted) {
       onAuthStateChanged(auth, (user) => {
@@ -87,7 +122,7 @@ function CreateListing() {
 
     if (geolocationEnabled) {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${ address }&key=${ process.env.REACT_APP_GEOCODE_API_KEY }`,
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
       )
 
       const data = await response.json()
@@ -114,7 +149,7 @@ function CreateListing() {
     const storeImage = async (image) => {
       return new Promise((resolve, reject) => {
         const storage = getStorage()
-        const fileName = `${ auth.currentUser.uid }-${ image.name }-${ uuidv4() }`
+        const fileName = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`
 
         const storageRef = ref(storage, 'images/' + fileName)
 
@@ -146,13 +181,13 @@ function CreateListing() {
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
               resolve(downloadURL)
             })
-          },
+          }
         )
       })
     }
 
     const imgUrls = await Promise.all(
-      [...images].map((image) => storeImage(image)),
+      [...images].map((image) => storeImage(image))
     ).catch(() => {
       setLoading(false)
       toast.error('Images not uploaded')
@@ -171,10 +206,12 @@ function CreateListing() {
     delete formDataCopy.address
     !formDataCopy.offer && delete formDataCopy.discountedPrice
 
-    const docRef = await addDoc(collection(db, 'listings'), formDataCopy)
+    // Update listing
+    const docRef = doc(db, 'listings', params.listingId)
+    await updateDoc(docRef, formDataCopy)
     setLoading(false)
     toast.success('Listing saved')
-    navigate(`/category/${ formDataCopy.type }/${ docRef.id }`)
+    navigate(`/category/${formDataCopy.type}/${docRef.id}`)
   }
 
   const onMutate = (e) => {
@@ -205,34 +242,34 @@ function CreateListing() {
   }
 
   if (loading) {
-    return <Spinner/>
+    return <Spinner />
   }
 
   return (
     <div className='profile'>
       <header>
-        <p className='pageHeader'>Create a Listing</p>
+        <p className='pageHeader'>Edit Listing</p>
       </header>
 
       <main>
-        <form onSubmit={ onSubmit }>
+        <form onSubmit={onSubmit}>
           <label className='formLabel'>Sell / Rent</label>
           <div className='formButtons'>
             <button
               type='button'
-              className={ type === 'sale' ? 'formButtonActive' : 'formButton' }
+              className={type === 'sale' ? 'formButtonActive' : 'formButton'}
               id='type'
               value='sale'
-              onClick={ onMutate }
+              onClick={onMutate}
             >
               Sell
             </button>
             <button
               type='button'
-              className={ type === 'rent' ? 'formButtonActive' : 'formButton' }
+              className={type === 'rent' ? 'formButtonActive' : 'formButton'}
               id='type'
               value='rent'
-              onClick={ onMutate }
+              onClick={onMutate}
             >
               Rent
             </button>
@@ -243,8 +280,8 @@ function CreateListing() {
             className='formInputName'
             type='text'
             id='name'
-            value={ name }
-            onChange={ onMutate }
+            value={name}
+            onChange={onMutate}
             maxLength='32'
             minLength='10'
             required
@@ -257,8 +294,8 @@ function CreateListing() {
                 className='formInputSmall'
                 type='number'
                 id='bedrooms'
-                value={ bedrooms }
-                onChange={ onMutate }
+                value={bedrooms}
+                onChange={onMutate}
                 min='1'
                 max='50'
                 required
@@ -270,8 +307,8 @@ function CreateListing() {
                 className='formInputSmall'
                 type='number'
                 id='bathrooms'
-                value={ bathrooms }
-                onChange={ onMutate }
+                value={bathrooms}
+                onChange={onMutate}
                 min='1'
                 max='50'
                 required
@@ -282,11 +319,11 @@ function CreateListing() {
           <label className='formLabel'>Parking spot</label>
           <div className='formButtons'>
             <button
-              className={ parking ? 'formButtonActive' : 'formButton' }
+              className={parking ? 'formButtonActive' : 'formButton'}
               type='button'
               id='parking'
-              value={ true }
-              onClick={ onMutate }
+              value={true}
+              onClick={onMutate}
               min='1'
               max='50'
             >
@@ -298,8 +335,8 @@ function CreateListing() {
               }
               type='button'
               id='parking'
-              value={ false }
-              onClick={ onMutate }
+              value={false}
+              onClick={onMutate}
             >
               No
             </button>
@@ -308,11 +345,11 @@ function CreateListing() {
           <label className='formLabel'>Furnished</label>
           <div className='formButtons'>
             <button
-              className={ furnished ? 'formButtonActive' : 'formButton' }
+              className={furnished ? 'formButtonActive' : 'formButton'}
               type='button'
               id='furnished'
-              value={ true }
-              onClick={ onMutate }
+              value={true}
+              onClick={onMutate}
             >
               Yes
             </button>
@@ -324,8 +361,8 @@ function CreateListing() {
               }
               type='button'
               id='furnished'
-              value={ false }
-              onClick={ onMutate }
+              value={false}
+              onClick={onMutate}
             >
               No
             </button>
@@ -336,12 +373,12 @@ function CreateListing() {
             className='formInputAddress'
             type='text'
             id='address'
-            value={ address }
-            onChange={ onMutate }
+            value={address}
+            onChange={onMutate}
             required
           />
 
-          { !geolocationEnabled && (
+          {!geolocationEnabled && (
             <div className='formLatLng flex'>
               <div>
                 <label className='formLabel'>Latitude</label>
@@ -349,8 +386,8 @@ function CreateListing() {
                   className='formInputSmall'
                   type='number'
                   id='latitude'
-                  value={ latitude }
-                  onChange={ onMutate }
+                  value={latitude}
+                  onChange={onMutate}
                   required
                 />
               </div>
@@ -360,22 +397,22 @@ function CreateListing() {
                   className='formInputSmall'
                   type='number'
                   id='longitude'
-                  value={ longitude }
-                  onChange={ onMutate }
+                  value={longitude}
+                  onChange={onMutate}
                   required
                 />
               </div>
             </div>
-          ) }
+          )}
 
           <label className='formLabel'>Offer</label>
           <div className='formButtons'>
             <button
-              className={ offer ? 'formButtonActive' : 'formButton' }
+              className={offer ? 'formButtonActive' : 'formButton'}
               type='button'
               id='offer'
-              value={ true }
-              onClick={ onMutate }
+              value={true}
+              onClick={onMutate}
             >
               Yes
             </button>
@@ -385,8 +422,8 @@ function CreateListing() {
               }
               type='button'
               id='offer'
-              value={ false }
-              onClick={ onMutate }
+              value={false}
+              onClick={onMutate}
             >
               No
             </button>
@@ -398,30 +435,30 @@ function CreateListing() {
               className='formInputSmall'
               type='number'
               id='regularPrice'
-              value={ regularPrice }
-              onChange={ onMutate }
+              value={regularPrice}
+              onChange={onMutate}
               min='50'
               max='750000000'
               required
             />
-            { type === 'rent' && <p className='formPriceText'>$ / Month</p> }
+            {type === 'rent' && <p className='formPriceText'>$ / Month</p>}
           </div>
 
-          { offer && (
+          {offer && (
             <>
               <label className='formLabel'>Discounted Price</label>
               <input
                 className='formInputSmall'
                 type='number'
                 id='discountedPrice'
-                value={ discountedPrice }
-                onChange={ onMutate }
+                value={discountedPrice}
+                onChange={onMutate}
                 min='50'
                 max='750000000'
-                required={ offer }
+                required={offer}
               />
             </>
-          ) }
+          )}
 
           <label className='formLabel'>Images</label>
           <p className='imagesInfo'>
@@ -431,14 +468,14 @@ function CreateListing() {
             className='formInputFile'
             type='file'
             id='images'
-            onChange={ onMutate }
+            onChange={onMutate}
             max='6'
             accept='.jpg,.png,.jpeg'
             multiple
             required
           />
           <button type='submit' className='primaryButton createListingButton'>
-            Create Listing
+            Edit Listing
           </button>
         </form>
       </main>
@@ -446,4 +483,4 @@ function CreateListing() {
   )
 }
 
-export default CreateListing
+export default EditListing

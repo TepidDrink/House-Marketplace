@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react'
+import { getAuth } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { useEffect, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import SwiperCore, { Navigation, Pagination, Scrollbar, A11y } from 'swiper'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import SwiperCore, { A11y, Navigation, Pagination, Scrollbar } from 'swiper'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/swiper-bundle.css'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getDoc, doc } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
-import { db } from '../firebase.config'
-import Spinner from '../components/Spinner'
 import shareIcon from '../assets/svg/shareIcon.svg'
+import Spinner from '../components/Spinner'
+import { db } from '../firebase.config'
 
 SwiperCore.use([Navigation, Pagination, Scrollbar, A11y])
 
@@ -36,77 +36,77 @@ function Listing() {
   }, [navigate, params.listingId])
 
   if (loading) {
-    return <Spinner />
+    return <Spinner/>
   }
 
   return <main>
-    <Swiper slidesPerView={1} pagination={{ clickable: true }}>
-      {listing.imgUrls.map((url, index) => (
-        <SwiperSlide key={index}>
+    <Swiper slidesPerView={ 1 } pagination={ { clickable: true } }>
+      { listing.imgUrls.map((url, index) => (
+        <SwiperSlide key={ index }>
           <div
-            style={{
-              background: `url(${listing.imgUrls[index]}) center no-repeat`,
+            style={ {
+              background: `url(${ listing.imgUrls[index] }) center no-repeat`,
               backgroundSize: 'cover',
-            }}
+            } }
             className='swiperSlideDiv'
           ></div>
         </SwiperSlide>
-      ))}
+      )) }
     </Swiper>
 
-    <div className='shareIconDiv' onClick={() => {
+    <div className='shareIconDiv' onClick={ () => {
       navigator.clipboard.writeText(window.location.href)
       setShareLinkCopied(true)
       setTimeout(() => {
         setShareLinkCopied(false)
       }, 2000)
     } }>
-      <img src={shareIcon} alt=''/>
+      <img src={ shareIcon } alt=''/>
     </div>
 
-    {shareLinkCopied && <p className='linkCopied'>Link Copied</p>}
+    { shareLinkCopied && <p className='linkCopied'>Link Copied</p> }
 
     <div className='listingDetails'>
       <p className='listingName'>
-        {listing.name} - ${
-          (listing.offer ? listing.discountedPrice : listing.regularPrice)
+        { listing.name } - ${
+        (listing.offer ? listing.discountedPrice : listing.regularPrice)
           .toString()
           .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-        }
+      }
       </p>
-      <p className='listingLocation'>{listing.location}</p>
+      <p className='listingLocation'>{ listing.location }</p>
       <p className='listingType'>
-        For {listing.type === 'rent' ? 'Rent' : 'Sale'}
+        For { listing.type === 'rent' ? 'Rent' : 'Sale' }
       </p>
-      {listing.offer && (
+      { listing.offer && (
         <p className='discountPrice'>
           ${
-            (listing.regularPrice - listing.discountedPrice)
-              .toString()
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-          } discount
+          (listing.regularPrice - listing.discountedPrice)
+            .toString()
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        } discount
         </p>
-        )}
+      ) }
 
       <ul className='listingDetailsList'>
         <li>
-          {listing.bedrooms} Bedroom{listing.bedrooms > 1 && 's'}
+          { listing.bedrooms } Bedroom{ listing.bedrooms > 1 && 's' }
         </li>
         <li>
-          {listing.bathrooms} Bathroom{listing.bathrooms > 1 && 's'}
+          { listing.bathrooms } Bathroom{ listing.bathrooms > 1 && 's' }
         </li>
-        <li>{listing.parking && 'Parking Spot'}</li>
-        <li>{listing.furnished && 'Furnished'}</li>
+        <li>{ listing.parking && 'Parking Spot' }</li>
+        <li>{ listing.furnished && 'Furnished' }</li>
       </ul>
 
       <p className='listingLocationTitle'>Location</p>
 
       <div className='leafletContainer'>
         <MapContainer
-          style={{ height: '100%', width: '100%' }}
-          center={[listing.geolocation.lat, listing.geolocation.lng]}
-          zoom={13}
-          scrollWheelZoom={false}>
+          style={ { height: '100%', width: '100%' } }
+          center={ [listing.geolocation.lat, listing.geolocation.lng] }
+          zoom={ 13 }
+          scrollWheelZoom={ false }>
 
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -114,19 +114,19 @@ function Listing() {
           />
 
           <Marker
-            position={[listing.geolocation.lat, listing.geolocation.lng]}>
-            <Popup>{listing.location}</Popup>
+            position={ [listing.geolocation.lat, listing.geolocation.lng] }>
+            <Popup>{ listing.location }</Popup>
           </Marker>
         </MapContainer>
       </div>
 
-      {auth.currentUser?.uid !== listing.userRef && (
+      { auth.currentUser?.uid !== listing.userRef && (
         <Link
-          to={`/contact/${listing.userRef}?listingName=${listing.name}`}
+          to={ `/contact/${ listing.userRef }?listingName=${ listing.name }` }
           className='primaryButton'>
           Contact Landlord
         </Link>
-      )}
+      ) }
     </div>
   </main>
 }
