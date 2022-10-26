@@ -14,6 +14,7 @@ function SignIn() {
     email: '',
     password: '',
   })
+  // eslint-disable-next-line
   const { name, email, password } = formData
 
   const navigate = useNavigate()

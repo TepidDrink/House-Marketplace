@@ -1,9 +1,11 @@
 import { getAuth, updateProfile } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { toast } from "react-toastify"
-import { db } from "../firebase.config"
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import homeIcon from '../assets/svg/homeIcon.svg'
+import keyboardArrowRightIcon from '../assets/svg/keyboardArrowRightIcon.svg'
+import { db } from '../firebase.config'
 
 function Profile() {
   const auth = getAuth()
@@ -30,7 +32,7 @@ function Profile() {
         ])
 
         await updateProfile(auth.currentUser, {
-          displayName: name
+          displayName: name,
         })
       }
     } catch (err) {
@@ -87,6 +89,12 @@ function Profile() {
           />
         </form>
       </div>
+
+      <Link to='/create-listing' className='createListing'>
+        <img src={ homeIcon } alt='home'/>
+        <p>Sell or rent your home</p>
+        <img src={ keyboardArrowRightIcon } alt='arrow right'/>
+      </Link>
     </main>
   </div>
 }
